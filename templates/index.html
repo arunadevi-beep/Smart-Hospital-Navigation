@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Department Navigation System | Multi-Stop & Fire Evacuation</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Top Header -->
+    <header class="app-header">
+        <div class="brand">
+            <div class="logo-icon">🏥</div>
+            <div>
+                <h1>CITY CARE HOSPITAL</h1>
+                <p class="tagline">Indoor Navigation & Emergency Safety System</p>
+            </div>
+        </div>
+        <div class="header-tools">
+            <!-- CRITICAL CODE RED FIRE EVACUATION BUTTON -->
+            <button type="button" id="btnFireEvacuation" class="btn btn-fire-evac" title="Emergency Fire Evacuation Route">
+                <span class="fire-flame-icon">🔥</span>
+                <span>CODE RED: Fire Evacuate</span>
+            </button>
+
+            <!-- Audio Voice Guidance Toggle -->
+            <div class="voice-toggle-wrap">
+                <label class="toggle-switch-compact">
+                    <input type="checkbox" id="voiceGuidanceToggle">
+                    <span class="slider-compact"></span>
+                    <span class="toggle-label-compact">🔊 Voice Audio</span>
+                </label>
+                <select id="voiceLang" class="lang-select-compact">
+                    <option value="en-US">English</option>
+                    <option value="ta-IN">தமிழ் (Tamil)</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Sidebar Controls -->
+        <aside class="sidebar">
+            <!-- Current Location Card -->
+            <div class="card control-card">
+                <div class="card-header">
+                    <span class="icon-circle start-icon">📍</span>
+                    <div>
+                        <h3>Current Location (Start)</h3>
+                        <small>Choose spot or scan Wall QR marker</small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <select id="startLocation" class="form-select">
+                        <option value="">Loading locations...</option>
+                    </select>
+                </div>
+                <button type="button" id="btnOpenQrModal" class="btn btn-outline btn-sm qr-btn">
+                    <span>📷 Scan Wall QR Code</span>
+                </button>
+            </div>
+
+            <!-- 1-Click Nearest Amenities Finder Card -->
+            <div class="card amenities-card">
+                <div class="card-header amenities-header">
+                    <span class="icon-circle amenity-icon">⚡</span>
+                    <div>
+                        <h3>1-Click Nearest Amenities</h3>
+                        <small>Instant shortest path from your current location</small>
+                    </div>
+                </div>
+                <div class="amenities-quick-grid">
+                    <button type="button" class="btn-amenity-quick" data-amenity="restroom" title="Find nearest Restroom / Washroom">
+                        <span class="aq-icon">🚻</span>
+                        <span class="aq-label">Restroom</span>
+                    </button>
+                    <button type="button" class="btn-amenity-quick" data-amenity="water" title="Find nearest Drinking Water RO Station">
+                        <span class="aq-icon">🚰</span>
+                        <span class="aq-label">Drinking Water</span>
+                    </button>
+                    <button type="button" class="btn-amenity-quick" data-amenity="pharmacy" title="Find 24/7 Main Pharmacy">
+                        <span class="aq-icon">💊</span>
+                        <span class="aq-label">Pharmacy</span>
+                    </button>
+                    <button type="button" class="btn-amenity-quick" data-amenity="cafeteria" title="Find Cafeteria & Snacks">
+                        <span class="aq-icon">☕</span>
+                        <span class="aq-label">Cafeteria</span>
+                    </button>
+                    <button type="button" class="btn-amenity-quick" data-amenity="atm" title="Find Cash Counter & ATM">
+                        <span class="aq-icon">🏧</span>
+                        <span class="aq-label">ATM / Billing</span>
+                    </button>
+                    <button type="button" class="btn-amenity-quick" data-amenity="lift" title="Find closest Wheelchair Elevator">
+                        <span class="aq-icon">🛗</span>
+                        <span class="aq-label">Elevator</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Destination Card -->
+            <div class="card control-card">
+                <div class="card-header">
+                    <span class="icon-circle dest-icon">🎯</span>
+                    <div>
+                        <h3>Destination Mode</h3>
+                        <small>Search symptoms, choose doctor, or plan multi-stop</small>
+                    </div>
+                </div>
+
+                <!-- BILINGUAL SYMPTOM SMART SEARCH BOX -->
+                <div class="symptom-search-container">
+                    <label class="symptom-search-label" for="symptomSearchInput">
+                        <span>🔍 Smart Symptom / Doctor Finder:</span>
+                        <small class="lang-hint">English & தமிழ்</small>
+                    </label>
+                    <div class="symptom-input-wrapper">
+                        <span class="symptom-search-icon">🩺</span>
+                        <input type="text" id="symptomSearchInput" class="symptom-search-input" 
+                               placeholder="Type symptom (e.g. headache, நெஞ்சு வலி, fracture)..." autocomplete="off">
+                        <button type="button" id="btnClearSymptomSearch" class="btn-clear-search hidden" title="Clear Search">✕</button>
+                    </div>
+                    <!-- Live Autocomplete Results Container -->
+                    <div id="symptomSearchResults" class="symptom-results-dropdown hidden"></div>
+                </div>
+
+                <!-- Destination Tabs (Added Multi-Stop Tab!) -->
+                <div class="dest-tabs">
+                    <button type="button" class="tab-btn active" data-tab="doctors">👨‍⚕️ Doctor</button>
+                    <button type="button" class="tab-btn" data-tab="departments">🚪 Room</button>
+                    <button type="button" class="tab-btn multistop-tab" data-tab="multistop">🏥 Multi-Stop</button>
+                    <button type="button" class="tab-btn danger" data-tab="emergency">🚨 SOS</button>
+                </div>
+
+                <!-- Tab 1: Specialist Doctors -->
+                <div class="tab-content active" id="tab-doctors">
+                    <div class="form-group">
+                        <label for="doctorSelect">Specialist Doctor:</label>
+                        <select id="doctorSelect" class="form-select">
+                            <option value="">-- Choose Specialist Doctor --</option>
+                        </select>
+                    </div>
+                    <div id="doctorCardPreview" class="doctor-preview-card hidden">
+                        <div class="doc-badge" id="docSpecialty">Specialty</div>
+                        <h4 id="docName">Dr. Name</h4>
+                        <p class="doc-room" id="docRoom">Room: ...</p>
+                        <div class="doc-meta">
+                            <span id="docTimings">⏱ 09:00 AM</span>
+                            <span class="badge-status-chip" id="docStatus">Available</span>
+                        </div>
+
+                        <!-- Live Smart Token Queue Tracker -->
+                        <div class="queue-tracker-card" id="queueTrackerCard">
+                            <div class="queue-tracker-header">
+                                <span class="queue-title-icon">🎟️</span>
+                                <strong>Live OPD Token & Queue Status</strong>
+                            </div>
+                            <div class="queue-input-row">
+                                <label for="patientTokenInput">My Token #:</label>
+                                <div class="token-input-control">
+                                    <input type="number" id="patientTokenInput" class="token-num-input" value="24" min="1" max="150">
+                                    <button type="button" id="btnUpdateQueue" class="btn-token-track">Check</button>
+                                </div>
+                            </div>
+                            <div class="queue-metrics-strip">
+                                <div class="qm-col">
+                                    <span class="qm-label">Serving Now</span>
+                                    <span class="qm-value" id="qmServingNow">#14</span>
+                                </div>
+                                <div class="qm-col">
+                                    <span class="qm-label">Patients Ahead</span>
+                                    <span class="qm-value" id="qmAhead">10</span>
+                                </div>
+                                <div class="qm-col">
+                                    <span class="qm-label">Est. Wait</span>
+                                    <span class="qm-value highlight-wait" id="qmWaitTime">~40 min</span>
+                                </div>
+                            </div>
+                            <div class="queue-status-banner status-long" id="queueStatusBanner">
+                                <span id="queueStatusText">Long Queue: 10 patients ahead (~40 min wait).</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Hospital Rooms -->
+                <div class="tab-content" id="tab-departments">
+                    <div class="form-group">
+                        <label for="roomSelect">Department / Room Facility:</label>
+                        <select id="roomSelect" class="form-select">
+                            <option value="">-- Choose Room / Ward --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Multi-Stop Journey Planner (NEW FEATURE!) -->
+                <div class="tab-content" id="tab-multistop">
+                    <div class="multistop-intro">
+                        <small style="color:#0369a1; font-weight:600;">Plan a complete visit: Doctor ➡️ Scans ➡️ Pharmacy in 1 route!</small>
+                    </div>
+
+                    <!-- Quick Presets -->
+                    <div class="preset-journeys-wrap">
+                        <span class="preset-label">Quick Presets:</span>
+                        <div class="preset-buttons">
+                            <button type="button" class="btn-preset" id="btnPresetOpdScan">
+                                <span>🩺 Dr. Priya (Ortho) ➡️ 🩻 X-Ray ➡️ 💊 Pharmacy</span>
+                            </button>
+                            <button type="button" class="btn-preset" id="btnPresetCardioEcho">
+                                <span>❤️ Dr. Kumar (Cardio) ➡️ 🩺 Ultrasound ➡️ 💊 Pharmacy</span>
+                            </button>
+                            <button type="button" class="btn-preset" id="btnPresetNeuroReturn">
+                                <span>🧠 Dr. Arun (Neuro - Room 201) ➡️ 🔄 Return to Ground Floor</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Smart Queue Reorder Advisory Banner -->
+                    <div id="queueAdvisoryBanner" class="queue-advisory-box hidden">
+                        <div class="qadv-header">
+                            <span class="qadv-icon">💡</span>
+                            <strong>Smart Queue Advisory</strong>
+                        </div>
+                        <p id="queueAdvisoryText">Dr. Priya has 10 patients ahead (~40 min wait). Save ~30 mins by doing X-Ray first!</p>
+                        <button type="button" id="btnApplyOptimizedQueue" class="btn btn-sm btn-optimize-queue">
+                            <span>⚡ Reorder: Do Scan First ➡️ Doctor</span>
+                        </button>
+                    </div>
+
+                    <!-- Dynamic Stops Container -->
+                    <div class="stops-list-container" id="stopsContainer">
+                        <!-- Stops rows populated dynamically -->
+                    </div>
+
+                    <div class="multistop-actions-row">
+                        <button type="button" id="btnAddStop" class="btn btn-outline btn-sm">
+                            <span>➕ Add Stop</span>
+                        </button>
+                        <button type="button" id="btnAddReturnGround" class="btn btn-outline btn-sm btn-return-ground" title="Append return journey to Ground Floor entrance">
+                            <span>🔄 Return to Ground Floor</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Emergency SOS -->
+                <div class="tab-content" id="tab-emergency">
+                    <p class="emergency-desc">1-Click shortest route to critical units:</p>
+                    <div class="emergency-buttons-grid" id="emergencyButtonsContainer"></div>
+                </div>
+
+                <!-- Travel Mode Preference -->
+                <div class="travel-mode-section">
+                    <label class="section-label">🚶 Mobility Preference:</label>
+                    <div class="travel-modes-grid">
+                        <label class="mode-pill active">
+                            <input type="radio" name="travelMode" value="walk" checked>
+                            <span class="mode-icon">🚶</span>
+                            <span class="mode-text">By Walk<small>Stairs First</small></span>
+                        </label>
+                        <label class="mode-pill">
+                            <input type="radio" name="travelMode" value="wheelchair">
+                            <span class="mode-icon">♿</span>
+                            <span class="mode-text">Wheelchair<small>Lifts & Ramps</small></span>
+                        </label>
+                        <label class="mode-pill">
+                            <input type="radio" name="travelMode" value="stretcher">
+                            <span class="mode-icon">🛏️</span>
+                            <span class="mode-text">Stretcher<small>Bed Lifts Only</small></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Corridor & Lift Maintenance Simulator -->
+                <div class="obstacle-section">
+                    <div class="obstacle-header" id="btnToggleObstaclePanel">
+                        <div class="obs-title">
+                            <span class="obs-icon">🚧</span>
+                            <span>Hospital Maintenance & Blockage Simulator</span>
+                        </div>
+                        <span class="obs-toggle-arrow" id="obsArrow">▼</span>
+                    </div>
+                    <div class="obstacle-body hidden" id="obstacleBody">
+                        <p class="obs-desc">Select any corridor or staircase to simulate a block (cleaning/repair). The system will calculate an instant alternate shortest route!</p>
+                        <div class="blockable-list" id="blockableListContainer"></div>
+                    </div>
+                </div>
+
+                <!-- Route Action Button -->
+                <button type="button" id="btnFindRoute" class="btn btn-primary btn-block">
+                    <span>🧭 Find Shortest Route</span>
+                </button>
+            </div>
+
+            <!-- Route Result Summary Card -->
+            <div id="routeResultCard" class="card result-card hidden">
+                <div class="card-header">
+                    <span class="icon-circle route-icon">🗺️</span>
+                    <div>
+                        <h3 id="resCardTitle">Calculated Route Summary</h3>
+                        <small id="resCardSubtitle">Guaranteed Shortest Path (Dijkstra)</small>
+                    </div>
+                </div>
+
+                <!-- Fire Alert Strobe Banner (Visible during fire evacuation) -->
+                <div id="fireEvacuationAlertBanner" class="fire-alert-box hidden">
+                    <span class="fire-icon-large">🚨🔥</span>
+                    <div>
+                        <strong>CODE RED FIRE EVACUATION IN PROGRESS!</strong>
+                        <p id="fireAlertBannerText">DO NOT USE ELEVATORS! Evacuate via fire staircase to outdoor assembly point.</p>
+                    </div>
+                </div>
+
+                <!-- Reroute Notice -->
+                <div id="rerouteAlertBanner" class="reroute-notice hidden">
+                    <span class="reroute-icon">⚠️</span>
+                    <div id="rerouteAlertText">Route dynamically adjusted around maintenance block!</div>
+                </div>
+
+                <!-- 1-Click Amenity Match Notice -->
+                <div id="amenityAlertBanner" class="amenity-notice-box hidden">
+                    <span class="amenity-notice-icon" id="amenityNoticeIcon">🚻</span>
+                    <div class="amenity-notice-content">
+                        <strong id="amenityNoticeTitle">Nearest Facility Found!</strong>
+                        <p id="amenityNoticeText">Restroom (1st Floor) is only 18 m away from your current location.</p>
+                    </div>
+                </div>
+
+                <!-- Metrics Grid -->
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <span class="metric-label">Total Distance</span>
+                        <span class="metric-value" id="resDistance">-- m</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Est. Time</span>
+                        <span class="metric-value" id="resTime">-- min</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Approx. Steps</span>
+                        <span class="metric-value" id="resSteps">-- steps</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-label">Mobility / Mode</span>
+                        <span class="metric-value" id="resMode">Walk</span>
+                    </div>
+                </div>
+
+                <!-- 1-Click Action Buttons: Return to Ground Floor & Print Slip / WhatsApp Pass -->
+                <div class="route-action-buttons-grid">
+                    <button type="button" id="btnReturnToGround" class="btn btn-return-action" title="Calculate reverse return route back to Ground Floor Main Entrance">
+                        <span class="return-icon">🔄</span>
+                        <span>Return to Ground</span>
+                    </button>
+                    <button type="button" id="btnPrintRouteSlip" class="btn btn-slip-action" title="Generate printable hospital slip and WhatsApp pass">
+                        <span>📄 Slip & WhatsApp</span>
+                    </button>
+                </div>
+
+                <!-- Directions Header -->
+                <div class="directions-header">
+                    <h4 id="directionsListTitle">Turn-by-Turn Directions</h4>
+                    <button type="button" id="btnSpeakDirections" class="btn btn-sm btn-audio">
+                        <span id="audioBtnIcon">🔊</span>
+                        <span id="audioBtnText">Read Aloud</span>
+                    </button>
+                </div>
+
+                <!-- Step Directions List -->
+                <div class="directions-list" id="directionsList"></div>
+            </div>
+        </aside>
+
+        <!-- Main Map & Directory Area -->
+        <main class="map-view-container">
+            <!-- Map Top Bar: Blueprint Info & Action Controls -->
+            <div class="floor-bar">
+                <div class="map-bar-title-wrap">
+                    <span class="map-bar-icon">🏢</span>
+                    <div>
+                        <strong class="map-bar-title">Architectural Floor Navigator</strong>
+                        <small class="map-bar-sub">Use side level tower [ 2, 1, 0 ] to switch floors</small>
+                    </div>
+                </div>
+
+                <div class="map-controls">
+                    <!-- Live Crowd Density Heatmap Toggle -->
+                    <button type="button" id="btnToggleCrowdHeatmap" class="btn-ctrl btn-heatmap-ctrl" title="Toggle Live Crowd Rush Heatmap">
+                        <span class="heatmap-flame">🔥</span> <span id="heatmapBtnText">Crowd Heatmap</span>
+                    </button>
+                    <button type="button" id="btnZoomIn" class="btn-ctrl" title="Zoom In">➕</button>
+                    <button type="button" id="btnZoomOut" class="btn-ctrl" title="Zoom Out">➖</button>
+                    <button type="button" id="btnResetView" class="btn-ctrl" title="Reset View">🔄</button>
+                    <button type="button" id="btnAnimatePath" class="btn-ctrl btn-play" title="Animate Path Trace">▶️ Replay</button>
+                </div>
+            </div>
+
+            <!-- ONE-TAP MULTI-FLOOR TRANSITION FLOATING ALERT -->
+            <div id="multiFloorBanner" class="floor-transition-banner hidden">
+                <div class="ft-content">
+                    <span class="ft-icon" id="ftIcon">🛗</span>
+                    <div>
+                        <strong id="ftTitle">Take Lift A to 1st Floor</strong>
+                        <p id="ftSubtitle">Tap this button when you reach the lift/stairs to see your next route!</p>
+                    </div>
+                </div>
+                <button type="button" id="btnOneTapTransition" class="btn btn-transition">
+                    <span>👉 Tap to Continue on Floor <span id="ftTargetFloorNum">1</span> ➡️</span>
+                </button>
+            </div>
+
+            <!-- Canvas Map Wrapper (Fixed Frame, No Jitter) -->
+            <div class="canvas-wrapper" id="canvasWrapper">
+                <canvas id="hospitalCanvas" width="920" height="560"></canvas>
+                
+                <div class="map-overlay-badge" id="mapOverlayBadge">
+                    <span id="currentFloorLabel">Ground Floor Blueprint</span>
+                    <span id="floorCrowdSummaryBadge" class="floor-crowd-chip chip-high">🔴 Floor Status: Heavy Rush (88%)</span>
+                    <button type="button" id="btnQuickReturnGround" class="btn-quick-return hidden" title="Return to Ground Floor Main Entrance">
+                        <span>🔄 Return to Ground Floor</span>
+                    </button>
+                    <span class="badge-tip">💡 Click on any room or Lift on the map to navigate</span>
+                </div>
+
+                <!-- SIDE VERTICAL FLOOR SELECTOR TOWER (Exact Match to User Reference) -->
+                <aside class="side-floor-tower" id="sideFloorTower" aria-label="Floor Level Selector">
+                    <div class="side-floor-header-pill">
+                        <span class="sf-title" id="sideFloorHeader">FLOOR 00</span>
+                    </div>
+                    <div class="side-floor-buttons-stack" id="floorTabsContainer">
+                        <button type="button" class="floor-tab side-floor-btn" data-floor="2" title="2nd Floor: Specialty Clinics & ICU">
+                            <span class="sf-num">2</span>
+                            <span class="sf-tooltip">Floor 2 • Specialist & ICU (🟢 Quiet 22%)</span>
+                        </button>
+                        <button type="button" class="floor-tab side-floor-btn" data-floor="1" title="1st Floor: OPD Consultation Wings">
+                            <span class="sf-num">1</span>
+                            <span class="sf-tooltip">Floor 1 • OPD Clinics (🟡 Moderate 55%)</span>
+                        </button>
+                        <button type="button" class="floor-tab side-floor-btn active" data-floor="0" title="Ground Floor: Arrival, Reception & ER">
+                            <span class="sf-num">0</span>
+                            <span class="sf-tooltip">Ground Floor • Reception & ER (🔴 Heavy 88%)</span>
+                        </button>
+                    </div>
+                </aside>
+            </div>
+
+            <!-- Map Legend & Interactive Crowd Filter -->
+            <div class="map-legend">
+                <div class="legend-item"><span class="legend-swatch room-standard"></span> 🔵 Patient Rooms & Clinics</div>
+                <div class="legend-item"><span class="legend-swatch room-emergency"></span> 🔴 Emergency & ICU Wards</div>
+                <div class="legend-item"><span class="legend-swatch lift-swatch"></span> 🟣 Elevators / Lifts</div>
+                <div class="legend-item"><span class="legend-swatch stairs-swatch"></span> 🟡 Staircases</div>
+                <div class="legend-item"><span class="legend-swatch start-swatch"></span> 🟢 Current Location</div>
+                <div class="legend-item"><span class="legend-swatch dest-swatch"></span> 🚩 Destination / Stop</div>
+                <div class="legend-item"><span class="legend-swatch fire-exit-swatch"></span> 🚪🏃 Fire Exit Door</div>
+                <div class="legend-item"><span class="legend-swatch path-swatch"></span> Shortest Route</div>
+                <div class="legend-item"><span class="legend-swatch obs-swatch"></span> 🚧 Blocked / Maintenance</div>
+                
+                <!-- Live Crowd Density Interactive Filter Pills -->
+                <div class="crowd-filter-wrapper">
+                    <span class="cfw-label">⚡ Find Rush:</span>
+                    <button type="button" class="crowd-filter-btn active" data-crowd="all" title="Show all rooms">All</button>
+                    <button type="button" class="crowd-filter-btn filter-low" data-crowd="low" title="Find quiet Low Crowd rooms (Blood Bank, ICU, OT, Dialysis)">
+                        <span class="legend-swatch crowd-low-swatch"></span> 🟢 Low Crowd
+                    </button>
+                    <button type="button" class="crowd-filter-btn filter-moderate" data-crowd="moderate" title="Find Moderate Rush rooms (Radiology, OPD Clinics)">
+                        <span class="legend-swatch crowd-mod-swatch"></span> 🟡 Moderate Rush
+                    </button>
+                    <button type="button" class="crowd-filter-btn filter-high" data-crowd="high" title="Find Heavy Rush areas (Reception, Pharmacy, Emergency)">
+                        <span class="legend-swatch crowd-high-swatch"></span> 🔴 Heavy Rush
+                    </button>
+                </div>
+            </div>
+
+            <!-- Interactive Crowd Location Suggestion Banner -->
+            <div id="crowdSuggestionBanner" class="crowd-suggestion-banner hidden">
+                <div class="csb-content">
+                    <span class="csb-icon" id="csbIcon">🟢</span>
+                    <span class="csb-text" id="csbText">Low crowd found in Blood Bank on Ground Floor.</span>
+                </div>
+                <button type="button" class="btn-csb-switch hidden" id="btnCsbSwitchFloor">
+                    <span id="csbSwitchText">👉 Switch Floor</span>
+                </button>
+            </div>
+
+            <!-- FLOOR ROOM DIRECTORY & AVAILABILITY EXPLORER -->
+            <section class="floor-directory-section">
+                <div class="directory-header">
+                    <div>
+                        <h3 id="directoryFloorTitle">🏢 Ground Floor - Rooms & Department Directory</h3>
+                        <p class="directory-subtitle">Complete list of departments, specialist clinics, and live doctor status on this floor.</p>
+                    </div>
+                    <div class="directory-filter">
+                        <span class="filter-label">Filter:</span>
+                        <button type="button" class="dir-filter-btn active" data-filter="all">All</button>
+                        <button type="button" class="dir-filter-btn" data-filter="consultation">Clinics</button>
+                        <button type="button" class="dir-filter-btn" data-filter="emergency">Emergency</button>
+                        <button type="button" class="dir-filter-btn filter-pill-low" data-filter="crowd-low">🟢 Low Crowd</button>
+                        <button type="button" class="dir-filter-btn filter-pill-mod" data-filter="crowd-moderate">🟡 Moderate Rush</button>
+                        <button type="button" class="dir-filter-btn filter-pill-high" data-filter="crowd-high">🔴 Heavy Rush</button>
+                    </div>
+                </div>
+
+                <!-- Room Cards Grid -->
+                <div class="floor-rooms-grid" id="floorRoomsGrid"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- QR Code Scanner Simulator Modal -->
+    <div id="qrModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span class="modal-icon">📷</span>
+                    <h3>Indoor QR Code Scanner (Indoor Positioning)</h3>
+                </div>
+                <button type="button" class="modal-close" id="btnCloseQrModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-desc">
+                    In hospitals where GPS doesn't work indoors, patients scan QR codes mounted on pillars and corridor walls. Select a wall QR marker below to simulate scanning your physical location:
+                </p>
+                <div class="qr-grid" id="qrMarkersGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Printable Hospital Route Slip & WhatsApp Digital Pass Modal -->
+    <div id="routeSlipModal" class="modal-backdrop hidden">
+        <div class="modal-card route-slip-modal-card">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span class="modal-icon">📄</span>
+                    <div>
+                        <h3>Outpatient Navigation Pass</h3>
+                        <small>City Care Hospital • Digital Medical Route Slip</small>
+                    </div>
+                </div>
+                <button type="button" class="modal-close" id="btnCloseSlipModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Printable Slip Container -->
+                <div class="hospital-pass-paper" id="printableHospitalPass">
+                    <!-- Slip Header -->
+                    <div class="slip-header-brand">
+                        <div class="sh-logo">🏥 CITY CARE HOSPITAL</div>
+                        <div class="sh-sub">124, Healthcare Boulevard • 24/7 Helpline: 1800-CARE-911</div>
+                        <div class="sh-divider">================================================</div>
+                    </div>
+
+                    <!-- Token & Date Strip -->
+                    <div class="slip-token-strip">
+                        <div class="sts-item">
+                            <span class="sts-label">APPOINTMENT TOKEN</span>
+                            <span class="sts-value" id="slipTokenNum">#24</span>
+                        </div>
+                        <div class="sts-item">
+                            <span class="sts-label">DATE & TIME</span>
+                            <span class="sts-value" id="slipDateTime">--</span>
+                        </div>
+                        <div class="sts-item">
+                            <span class="sts-label">QUEUE STATUS</span>
+                            <span class="sts-value" id="slipQueueStatus">Serving #14</span>
+                        </div>
+                    </div>
+
+                    <!-- Patient Route Info Table -->
+                    <div class="slip-details-table">
+                        <div class="sdt-row">
+                            <span class="sdt-key">📍 Current Location (Start):</span>
+                            <strong class="sdt-val" id="slipStartLoc">Main Hospital Entrance</strong>
+                        </div>
+                        <div class="sdt-row">
+                            <span class="sdt-key">🎯 Target Destination:</span>
+                            <strong class="sdt-val highlight" id="slipDestLoc">Dr. Priya (Room 102)</strong>
+                        </div>
+                        <div class="sdt-row">
+                            <span class="sdt-key">🏢 Floor & Wing:</span>
+                            <span class="sdt-val" id="slipFloorWing">1st Floor • West Wing</span>
+                        </div>
+                        <div class="sdt-row">
+                            <span class="sdt-key">🚶 Mobility Mode:</span>
+                            <span class="sdt-val" id="slipMobility">By Walk (Stairs First)</span>
+                        </div>
+                        <div class="sdt-row">
+                            <span class="sdt-key">📏 Distance & Walk Time:</span>
+                            <span class="sdt-val" id="slipMetrics">117 m • ~3 mins (~156 steps)</span>
+                        </div>
+                    </div>
+
+                    <!-- Turn-by-Turn Step Directions -->
+                    <div class="slip-directions-box">
+                        <h5>Turn-by-Turn Path Directions / வழிமுறைகள்:</h5>
+                        <ol id="slipDirectionsOrderedList" class="slip-ordered-directions"></ol>
+                    </div>
+
+                    <!-- Medical Barcode Simulator & Safety Notice -->
+                    <div class="slip-footer-stamp">
+                        <div class="barcode-visual">||| | | |||| || | || ||||| | ||| || ||||</div>
+                        <div class="slip-code-text">PASS-REF-NAV-2026-CC</div>
+                        <small>Present this digital slip at department nursing station or security gate.</small>
+                    </div>
+                </div>
+
+                <!-- Pass Action Buttons -->
+                <div class="slip-modal-actions">
+                    <button type="button" id="btnPrintSlipNow" class="btn btn-primary">
+                        <span>🖨️ Print Slip / Save PDF</span>
+                    </button>
+                    <button type="button" id="btnShareWhatsApp" class="btn btn-whatsapp">
+                        <span>💬 Share on WhatsApp</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/map_renderer.js"></script>
+    <script src="/static/js/voice.js"></script>
+    <script src="/static/js/qr_simulator.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
